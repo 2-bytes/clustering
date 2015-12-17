@@ -39,8 +39,12 @@ public class DataProcessingUtil {
         }
         return data;
     }
-    public static void printData(double[][] data, int precission)
-    {
+    /**
+     * Displays given array with specified precision
+     * @param data
+     * @param precision
+     */
+    public static void printData(double[][] data, int precision){
         StringBuilder spaces = new StringBuilder();
             int maxsize=0;
             int cellsize=0;
@@ -58,36 +62,32 @@ public class DataProcessingUtil {
                     cellsize=String.valueOf(Math.round(data[i][j])).length();
                     spaces.delete(maxsize, spaces.length());
                     spaces.insert(maxsize, data[i][j]<0?"":" ");
-                    spaces.append("%.").append(precission).append("f ");
+                    spaces.append("%.").append(precision).append("f ");
                     System.out.format(spaces.substring(cellsize-1), data[i][j]);
                 }
                 System.out.println();
             }
             System.out.println();
     }
-    public static double[][] selectRandomVariables(double[][] data, int k)
-    {
-        //ArrayList<double[]> selected = new ArrayList<>(k);
+    /**
+     * Selects random columns from given array
+     * @param data points
+     * @param k number of variables to select
+     * @return Array, with same number of rows as data and k columns selected from data
+     */
+    public static double[][] selectRandomVariables(double[][] data, int k){
         Random r = new Random();
         double[][] newdata = new double[data.length][k];//transpose(data);
         IntStream ints =  r.ints(0, data[0].length).distinct().limit(k);
         PrimitiveIterator<Integer, IntConsumer> iterator = ints.iterator();
         for(int i=0;i<k;i++){
             int column = iterator.next();
-            for(int j=0;j<data.length;j++){
+            for(int j=0;j<data.length;j++)
                 newdata[j][i] = data[j][column];
-            }
         }
         return newdata;
-        //forEach((a)->selected.add(newdata[a]));
-        //Double[][] boxedResult = (Double[][])selected.toArray();
-        //double[][] unboxedResult = new double[k][data.length];
-        //for(int i=0;i<selected.size();i++)
-        //    unboxedResult[i]=selected.get(i);
-        //return transpose(unboxedResult);
     }
-    public static double[][] transpose(double[][] data)
-    {
+    public static double[][] transpose(double[][] data){
         double[][] transposed = new double[data[0].length][data.length];
         for(int i=0;i<data[0].length;++i)
             for(int j=0;j<data.length;++j)

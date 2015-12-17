@@ -33,29 +33,58 @@ public class CClustering {
             Logger.getLogger(CClustering.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    public static double[][] kMeans(double[][] data, int k)
-    {
+    public static double[][] kMeans(double[][] data, int k){
         double[][] centroids = initCentroids(data, k);
+        ArrayList<Integer>[] assigned = new ArrayList[k];
+
         return null;
     }
-    private static double[][] initCentroids(double[][] data, int k)
-    {
-        //ArrayList<double[]> centroids = new ArrayList(k);
+
+    /**
+     * Initialize centroids for k-means clustering.
+     * @param data points.
+     * @param k number of clusters.
+     * @return Centers of clusters.
+     */
+    private static double[][] initCentroids(double[][] data, int k){
         Random r = new Random();
         IntStream ints =  r.ints(0, data.length).distinct().limit(k);
         PrimitiveIterator<Integer, IntConsumer> iterator = ints.iterator();
-        //ints.forEach((a)->centroids.add(data[a]));
         double[][] result = new double[k][data[0].length];
         for(int i=0;i<k;i++){
             int row = iterator.next();
             result[i] = data[row];
         }
-        //for(int i=0;i<centroids.size();i++)
-        //    result[i] = centroids.get(i);
         return result;
     }
-    private static double euclidDistance(double[] x, double[] y)
-    {
+
+    /**
+     * Assign each pint to the nearest cluster.
+     * @param centroids  centers of clusters.
+     * @param points points to assign.
+     * @return An array with length centroids.length of ArrayLists which have indexes of assigned points.
+     */
+    private static ArrayList<Integer>[] assignPoints(double[][] centroids, double[][] points){
+        ArrayList<Integer>[] assigned = new ArrayList[centroids.length];
+        for(int i=0;i<points.length;i++){
+            assigned[findNearest(centroids, points[i])].add(i);
+        }
+        return assigned;
+    }
+
+    private static int findNearest(double[][] clusters, double[] point){
+        double nearest = euclidDistance(point, clusters[0]); //distance
+        int nearestIndex = 0; //index
+        double distance = 0;
+        for(int i=0;i<clusters.length;i++){
+            distance = euclidDistance(clusters[i], point);
+            nearestIndex = nearest < distance ? nearestIndex:i;
+            nearest = nearest < distance ? nearest:distance;
+        }
+        return nearestIndex;
+    }
+    
+    private static double euclidDistance(double[] x, double[] y){
         if(x.length!=y.length)
             throw new ArrayIndexOutOfBoundsException("x and y must have the same length");
         double sum=0;
