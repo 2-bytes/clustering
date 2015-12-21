@@ -76,6 +76,10 @@ public class DataProcessingUtil {
      * @return Array, with same number of rows as data and k columns selected from data
      */
     public static double[][] selectRandomVariables(double[][] data, int k){
+        if (data[0].length>k)
+            throw new ArrayIndexOutOfBoundsException("Array has less than k columns");
+        if(data[0].length == k)
+            return data;
         Random r = new Random();
         double[][] newdata = new double[data.length][k];//transpose(data);
         IntStream ints =  r.ints(0, data[0].length).distinct().limit(k);

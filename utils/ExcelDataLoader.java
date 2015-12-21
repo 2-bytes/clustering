@@ -36,7 +36,7 @@ public class ExcelDataLoader {
             for(int j=0; j < data[0].length;j++){
                 data[i][j] = sh.getRow(i+shift).getCell(j).getNumericCellValue();
             }
-        return DataProcessingUtil.selectRandomVariables(data, 4);
+        return data;
     }
 
 
