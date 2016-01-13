@@ -7,12 +7,13 @@ package cclusteringmodified;
 
 import cclusteringmodified.utils.ExcelDataLoader;
 import cclusteringmodified.utils.DataProcessingUtil;
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.function.IntConsumer;
@@ -28,49 +29,56 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
  */
 public class CClustering {
 
+    private static final int MAX_ITERATIONS = 10000;
+
     public static void main(String[] args) {
         try {
             double[][] data = ExcelDataLoader.loadXLSXFile("I:\\Book1.xlsx", false);
             DataProcessingUtil.printData(data, 4);
-            ArrayList<double[]>[] clusterized= kMeans(DataProcessingUtil.normalize(data), 4);
-            BufferedImage image = new BufferedImage(101, 101, BufferedImage.TYPE_INT_RGB);
+            //DataProcessingUtil.printData(
+            //        DataProcessingUtil.correlationMatrix(
+            //                DataProcessingUtil.normalize(data)), 2);
+            Cluster[] clusterized= kMeans(DataProcessingUtil.normalize(data), 5, new int[]{6, 8, 3, 6, 7});
+            BufferedImage image = new BufferedImage(201, 201, BufferedImage.TYPE_INT_RGB);
             Graphics2D g = image.createGraphics();
-            for(int i=0;i<clusterized.length;i++){
-                for(double[] point:clusterized[i]){
-                    assert(point[0]<1.0 && point[1]<1.0);
-                    int shift = (255<<16)*(4 & ~i)+(255<<8)*(2 & ~i)+255*(1 & ~i);
-                    image.setRGB((int)(100*point[0]), 100-(int)(100*point[1]), shift);
+            for(int i=1;i<=clusterized.length;i++){
+                for(Point point:clusterized[i-1].getPoints()){
+                    //assert(point[0]<1.0 && point[1]<1.0);
+                    int shift = (255<<16)*(4 & i)+(255<<8)*(2 & i)+255*(1 & i);
+                    image.setRGB((int)(200*point.coordinates[0]), 200-(int)(200*point.coordinates[1]), shift);
                 }
             }
             File imag = new File("result.png");
             ImageIO.write(image, "png", imag);
-        } catch (IOException ex) {
-            Logger.getLogger(CClustering.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidFormatException ex) {
+        } catch (IOException | InvalidFormatException ex) {
             Logger.getLogger(CClustering.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    public static ArrayList<double[]>[] kMeans(double[][] data, int k){
+    public static Cluster[] kMeans(double[][] data, int k, int[] inert){
+       if(inert.length<k)
+           throw new IllegalArgumentException("Inert has less than k elements");
+        Cluster[] clusters = new Cluster[k];
         double[][] centroids = initCentroids(data, k);
-        double[][] newCentroids = new double[k][data[0].length];
-        ArrayList<double[]>[] assigned = assignPoints(centroids, data);
-        newCentroids = calculateCentroids(assigned);
-        while(!hasChanged(centroids, newCentroids))
-        {
-            centroids = newCentroids;
-            assigned = assignPoints(centroids, data);
-            newCentroids = calculateCentroids(assigned);
+        for(int i=0;i<k;i++)
+            clusters[i] = new Cluster(centroids[i], inert[i]);
+        ArrayList<Point> points = new ArrayList<>();
+        for(double[] p: data)
+            points.add(new Point(p));
+        assignPoints(clusters, points);
+        double[][] newCentroids = calculateCentroids(clusters);
+        for(int i=0;i<MAX_ITERATIONS;i++){
+            for(int j=0;j<k;j++)
+                clusters[j].setCentroid(newCentroids[j]);
+            assignPoints(clusters, points);
+            newCentroids = calculateCentroids(clusters);
         }
-
-        return assigned;
+        return clusters;
     }
 
-    private static boolean hasChanged(double[][] previous, double[][] current){
-        for(int i=0;i<previous.length;i++){
-            for(int j=0;j<previous[0].length;j++)
-                if(previous[i][j]!=current[i][j])
+    private static boolean hasChanged(double[] previous, double[] current){
+        for(int i=0;i<previous.length;i++)
+                if(previous[i]!=current[i])
                     return false;
-        }
         return true;
     }
 
@@ -95,51 +103,43 @@ public class CClustering {
 
     /**
      * Assign each pint to the nearest cluster.
-     * @param centroids  centers of clusters.
+     * @param clusters  clusters to assign points to.
      * @param points points to assign.
-     * @return An array with length centroids.length of ArrayLists which have indexes of assigned points.
      */
-    private static ArrayList<double[]>[] assignPoints(double[][] centroids, double[][] points){
-        ArrayList<double[]>[] assigned = new ArrayList[centroids.length];
-        for(int i=0;i<centroids.length;i++)
-            assigned[i] = new ArrayList<>();
-        for(int i=0;i<points.length;i++){
-            assigned[findNearest(centroids, points[i])].add(points[i]);
+    private static void assignPoints(Cluster[] clusters, ArrayList<Point> points){
+        for(Point point:points){
+            findNearest(clusters, point);
         }
-        return assigned;
+
     }
 
-    private static double[][] calculateCentroids(ArrayList<double[]>[] assignedPoints){
-        int clusters = assignedPoints.length;
-        int dimensions = assignedPoints[0].get(0).length;
-        double[][] result = new double[clusters][dimensions];
-        double[] sumVector;
-        for(int i=0;i<clusters;i++){
-            sumVector = assignedPoints[i].parallelStream()
-                    .reduce((a, b)->{
-                        double[] res = new double[a.length];
-                        for(int p=0;p<a.length;p++)
-                            res[p] = a[p]+b[p];
-                        return res;
-                        }).get();
-            for (int j=0;j<dimensions;j++){
-                sumVector[j]/= assignedPoints[i].size();
-            }
-            result[i] = sumVector;
+    private static double[][] calculateCentroids(Cluster[] clusters){
+        int numClusters = clusters.length;
+        int dimensions = clusters[0].getCentroid().length;
+        double[][] result = new double[numClusters][dimensions];
+        double[] sumVector = new double[dimensions];
+        for(int i=0;i<numClusters;i++){
+            for(Point p:clusters[i].getPoints())
+                for(int j=0;j<dimensions;j++)
+                    sumVector[j] += p.coordinates[j];
+            for(int j=0;j<dimensions;j++)
+                sumVector[j]/=clusters[i].getPoints().size();
+            result[i]=sumVector;
         }
         return result;
     }
 
-    private static int findNearest(double[][] clusters, double[] point){
-        double nearest = euclidDistance(point, clusters[0]); //distance
-        int nearestIndex = 0; //index
-        double distance = 0;
+    private static void findNearest(Cluster[] clusters, Point point){
+        double[] distances = new double[clusters.length];
         for(int i=0;i<clusters.length;i++){
-            distance = euclidDistance(clusters[i], point);
-            nearestIndex = nearest < distance ? nearestIndex:i;
-            nearest = nearest < distance ? nearest:distance;
+            distances[i]=euclidDistance(clusters[i].getCentroid(), point.coordinates);
         }
-        return nearestIndex;
+        Arrays.sort(distances);
+
+        for(int i=0;!point.assigned&&i<clusters.length;i++){
+            point.distance = distances[i];
+            clusters[i].addPoint(point);
+        }
     }
 
     private static double euclidDistance(double[] x, double[] y){
