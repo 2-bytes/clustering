@@ -1,11 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package cclusteringmodified;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  *
@@ -35,6 +31,9 @@ public class Cluster {
 
     public void setCentroid(double[] centr){
         System.arraycopy(centr, 0, this.centroid, 0, centr.length);
+    }
+
+    public void clear(){
         cost = 0;
         for(Point point:points)
             point.assigned = false;
@@ -58,7 +57,6 @@ public class Cluster {
     }
 /**
  * Tries to assign a point to cluster.
- * If there is no more place in this cluster function tries to remove the furthest point and add given instead;
  *
  * @param point Point that will be assigned to cluster
  */
@@ -66,11 +64,7 @@ public class Cluster {
         if(this.size<=points.size())
             addToFull(point);
         else{
-            //Ensures that the furthest element is always the last
-            if(points.size()>0&&point.distance>points.get(points.size()-1).distance)
-                points.add(point);
-            else
-                points.add(0, point);
+            points.add(point);
             cost += point.distance;
             point.assigned = true;
         }
@@ -78,10 +72,12 @@ public class Cluster {
     }
 
     private void addToFull(Point point){
-    if(point.distance<points.get(points.size()-1).distance){
-            points.get(size-1).assigned = false;
-            cost -= points.get(size-1).distance;
-            points.remove(size-1);
+        Point furthest = points.stream().max(
+                (Point a, Point b)->Double.compare(a.distance, b.distance)).get();
+        if(point.distance<furthest.distance){
+            furthest.assigned = false;
+            cost -= furthest.distance;
+            points.remove(furthest);
             addPoint(point);
         }
     }
