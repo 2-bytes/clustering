@@ -1,7 +1,6 @@
 package cclusteringmodified;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 /**
  *
@@ -35,8 +34,9 @@ public class Cluster {
 
     public void clear(){
         cost = 0;
-        for(Point point:points)
+        points.stream().forEach((point) -> {
             point.assigned = false;
+        });
         points.removeAll(points);
     }
 

@@ -8,15 +8,10 @@ import cclusteringmodified.Cluster;
 import cclusteringmodified.Point;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import sun.swing.UIAction;
 
 
 public class MainForm extends JFrame {
@@ -28,7 +23,7 @@ public class MainForm extends JFrame {
 
         private final Color[] colorspace = new Color[]{Color.BLUE, Color.GREEN,
             Color.MAGENTA, Color.YELLOW, Color.RED, Color.CYAN, Color.PINK, Color.BLACK};
-        private Cluster[] clusters;
+        private final Cluster[] clusters;
 
         public Canvas(Cluster[] clusters) {
             this.clusters = clusters;
@@ -48,7 +43,8 @@ public class MainForm extends JFrame {
                 for(Point p :clusters[i].getPoints()){
                     int x = (int)(p.coordinates[0]*(this.getWidth()-1));
                     int y = (int)(p.coordinates[1]*(this.getHeight()-1));
-                    g.fillOval(x-4, this.getHeight()-y-4, 8, 8);
+                    g.drawChars(p.tag.toCharArray(), 0, p.tag.length(), x, this.getHeight()-y);
+                            //g.fillOval(x-4, this.getHeight()-y-4, 8, 8);
                 }
             }
         }

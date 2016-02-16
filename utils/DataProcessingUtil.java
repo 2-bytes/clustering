@@ -68,14 +68,15 @@ public class DataProcessingUtil {
      * @param k number of variables to select
      * @return Array, with same number of rows as data and k columns selected from data
      */
-    public static double[][] selectRandomVariables(double[][] data, int k){
-        if (data[0].length>k)
+    public static double[][] selectRandomVariables(double[][] data, int k, boolean omitFirstColumn){
+        if (data[0].length<k)
             throw new ArrayIndexOutOfBoundsException("Array has less than k columns");
         if(data[0].length == k)
             return data;
+        int shift = omitFirstColumn? 1: 0;
         Random r = new Random();
         double[][] newdata = new double[data.length][k];//transpose(data);
-        IntStream ints =  r.ints(0, data[0].length).distinct().limit(k);
+        IntStream ints =  r.ints(shift, data[0].length).distinct().limit(k);
         PrimitiveIterator<Integer, IntConsumer> iterator = ints.iterator();
         for(int i=0;i<k;i++){
             int column = iterator.next();
@@ -125,9 +126,11 @@ public class DataProcessingUtil {
             for(int j=0;j<data.length;j++)
                 result[i][j] = correlation(data[i], data[j]);*/
         result = multiplyMatrices(data, transpose(data));
-        for(int i=0;i<result.length;i++)
-            for(int j=0;j<result.length;j++)
-                result[i][j] /= result.length-1;
+        for (double[] result1 : result) {
+            for (int j = 0; j<result.length; j++) {
+                result1[j] /= result.length-1;
+            }
+        }
         return result;
     }
     public static double[][] multiplyMatrices(double[][] a, double[][] b){

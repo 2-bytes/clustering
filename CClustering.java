@@ -3,20 +3,14 @@ package cclusteringmodified;
 import cclusteringmodified.ui.MainForm;
 import cclusteringmodified.utils.ExcelDataLoader;
 import cclusteringmodified.utils.DataProcessingUtil;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.function.IntConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
-import javax.imageio.ImageIO;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 /**
@@ -29,31 +23,21 @@ public class CClustering {
     private static ArrayList<Point> points;
     private static Cluster[] clusters;
     private static int numClusters;
+
     public static void main(String[] args) {
         try {
-            double[][] data = ExcelDataLoader.loadXLSXFile("I:\\Book1.xlsx", false);
+            double[][] data = ExcelDataLoader.loadXLSXFile("I:\\Book2.xlsx", 0, 100, true);
             DataProcessingUtil.printData(data, 4);
-            //DataProcessingUtil.printData(
-            //        DataProcessingUtil.correlationMatrix(
-            //                DataProcessingUtil.normalize(data)), 2);
-            Cluster[] clusterized= kMeans(DataProcessingUtil.normalize(data), 4, new int[]{7, 6, 12, 10});
+            Cluster[] clusterized= kMeans(
+                    DataProcessingUtil.normalize(
+                    DataProcessingUtil.selectRandomVariables(data, 4, true)), 5, new int[]{22, 19, 14, 20, 26});
             MainForm form = new MainForm(clusterized);
             form.setVisible(true);
-            /*BufferedImage image = new BufferedImage(201, 201, BufferedImage.TYPE_INT_RGB);
-            //Graphics2D g = image.createGraphics();
-            for(int i=1;i<=clusterized.length;i++){
-                for(Point point:clusterized[i-1].getPoints()){
-                    //assert(point[0]<1.0 && point[1]<1.0);
-                    int shift = (255<<16)*(4 & i)+(255<<8)*(2 & i)+255*(1 & i);
-                    image.setRGB((int)(200*point.coordinates[0]), 200-(int)(200*point.coordinates[1]), shift);
-                }
-            }
-            File imag = new File("result.png");
-            ImageIO.write(image, "png", imag);*/
         } catch (IOException | InvalidFormatException ex) {
             Logger.getLogger(CClustering.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
     public static Cluster[] kMeans(double[][] data, int k, int[] inert){
        numClusters=k;
         if(inert.length<k)
@@ -63,8 +47,11 @@ public class CClustering {
         for(int i=0;i<k;i++)
             clusters[i] = new Cluster(centroids[i], inert[i]);
         points = new ArrayList<>();
-        for(double[] p: data)
-            points.add(new Point(p));
+        int i=1;
+        for(double[] p: data){
+            points.add(new Point(p, String.valueOf(i)));
+            i++;
+        }
         while(!areAssigned(points))
             assignPoints(clusters, points);
         double[][] newCentroids = calculateCentroids(clusters);
@@ -92,6 +79,7 @@ public class CClustering {
     private static boolean areAssigned(ArrayList<Point> points){
         return !points.stream().anyMatch((p) -> (!p.assigned));
     }
+
     private static boolean hasChanged(double[] previous, double[] current){
         for(int i=0;i<previous.length;i++)
                 if(previous[i]!=current[i])
@@ -124,14 +112,13 @@ public class CClustering {
      * @param points points to assign.
      */
     private static void assignPoints(Cluster[] clusters, ArrayList<Point> points){
-        for(Point point:points){
+        points.stream().forEach((point) -> {
             findNearest(clusters, point);
-        }
+        });
 
     }
 
     private static double[][] calculateCentroids(Cluster[] clusters){
-        int numClusters = clusters.length;
         int dimensions = clusters[0].getCentroid().length;
         double[][] result = new double[numClusters][dimensions];
         double[] sumVector = new double[dimensions];
