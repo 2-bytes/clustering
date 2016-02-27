@@ -10,12 +10,15 @@ public class Cluster {
     private double cost;
     private final int size;
     private double[] centroid;
+    private double[] cummul; //sum of coordinates
     private ArrayList<Point> points;
 
     Cluster(double[] centroid, int size){
         points = new ArrayList<>();
         this.centroid = new double[centroid.length];
+        this.cummul = new double[centroid.length];
         System.arraycopy(centroid, 0, this.centroid, 0, centroid.length);
+        System.arraycopy(centroid, 0, this.cummul, 0, centroid.length);
         this.size = size;
         cost = 0;
     }
@@ -23,7 +26,9 @@ public class Cluster {
     Cluster(double[] centroid){
         points = new ArrayList<>();
         this.centroid = new double[centroid.length];
+        this.cummul = new double[centroid.length];
         System.arraycopy(centroid, 0, this.centroid, 0, centroid.length);
+        System.arraycopy(centroid, 0, this.cummul, 0, centroid.length);
         this.size = 0;
         cost = 0;
     }
@@ -62,21 +67,31 @@ public class Cluster {
  */
     public void addPoint(Point point){
         if(this.size<=points.size())
-            addToFull(point);
+           addToFull(point);
         else{
             points.add(point);
             cost += point.distance;
             point.assigned = true;
+            for(int i=0;i<cummul.length;i++)
+                this.cummul[i]+=point.coordinates[i];
         }
 
     }
-
+    public void shiftCentroid(double[] shift){
+        for(int i=0;i<centroid.length;i++){
+            centroid[i]=cummul[i]/points.size();
+        }
+    }
     private void addToFull(Point point){
         Point furthest = points.stream().max(
                 (Point a, Point b)->Double.compare(a.distance, b.distance)).get();
         if(point.distance<furthest.distance){
             furthest.assigned = false;
             cost -= furthest.distance;
+            for(int i=0;i<cummul.length;i++){
+                this.cummul[i]-=furthest.coordinates[i];
+                this.cummul[i]+=point.coordinates[i];
+            }
             points.remove(furthest);
             addPoint(point);
         }

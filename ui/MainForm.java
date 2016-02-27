@@ -60,6 +60,7 @@ public class MainForm extends JFrame {
         //JButton nextStepBtn = new JButton();
         //nextStepBtn.setText("Next");
         //nextStepBtn.setSize(50, 15);
+        this.setTitle("Кластеризация k-means");
         canvas.addMouseListener(new MouseListener(){
 
             @Override

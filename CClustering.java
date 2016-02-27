@@ -26,11 +26,11 @@ public class CClustering {
 
     public static void main(String[] args) {
         try {
-            double[][] data = ExcelDataLoader.loadXLSXFile("I:\\Book2.xlsx", 0, 100, true);
+            double[][] data = ExcelDataLoader.loadXLSXFile("H:\\Book2.xlsx", 0, 500, true);
             DataProcessingUtil.printData(data, 4);
             Cluster[] clusterized= kMeans(
                     DataProcessingUtil.normalize(
-                    DataProcessingUtil.selectRandomVariables(data, 4, true)), 5, new int[]{22, 19, 14, 20, 26});
+                    DataProcessingUtil.selectRandomVariables(data, 2, true)), 6, new int[]{110, 110, 100, 100, 100, 100});
             MainForm form = new MainForm(clusterized);
             form.setVisible(true);
         } catch (IOException | InvalidFormatException ex) {
@@ -137,14 +137,15 @@ public class CClustering {
         if(point.assigned)
             return;
         ArrayList<Double> distances = new ArrayList<>(numClusters);
-        for(int i=0;i<clusters.length;i++){
-            distances.add(euclidDistance(clusters[i].getCentroid(), point.coordinates));
+        for (Cluster cluster : clusters) {
+            distances.add(euclidDistance(cluster.getCentroid(), point.coordinates));
         }
         distances.stream().sorted((Double a, Double b) -> Double.compare(a, b)).
                 forEachOrdered((a)->{
                     if(!point.assigned){
                         point.distance = a;
                         clusters[distances.indexOf(a)].addPoint(point);
+                        //clusters[distances.indexOf(a)].shiftCentroid(point.coordinates);
                     }
                 });
     }

@@ -28,7 +28,7 @@ public class ExcelDataLoader {
      */
     public static double[][] loadXLSXFile(String path, int listNmbr,int rowsNmbr, boolean omitFirstRow) throws IOException, InvalidFormatException{
         XSSFWorkbook wb = new XSSFWorkbook(new File(path));
-        XSSFSheet sh = wb.getSheetAt(listNmbr); // Only the first one, maybe will put it as a parameter later
+        XSSFSheet sh = wb.getSheetAt(listNmbr);
         int shift = omitFirstRow? 1 : 0;
         if(rowsNmbr>sh.getLastRowNum())
             throw new ArrayIndexOutOfBoundsException("File has less rows than specified");
@@ -37,11 +37,12 @@ public class ExcelDataLoader {
         IntStream ints =  r.ints(shift, sh.getLastRowNum() + 1).distinct().limit(rowsNmbr);
         PrimitiveIterator<Integer, IntConsumer> iterator = ints.iterator();
         int index;
-        for(int i = 0;i < data.length;i++){
+        for (double[] row : data) {
             index = iterator.next();
-            for(int j = 0; j < data[0].length;j++)
-                data[i][j] = sh.getRow(index).getCell(j).getNumericCellValue();
+            for (int j = 0; j < data[0].length; j++) {
+                row[j] = sh.getRow(index).getCell(j).getNumericCellValue();
             }
+        }
         return data;
     }
 
