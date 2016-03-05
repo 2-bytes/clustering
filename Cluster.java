@@ -9,11 +9,13 @@ import java.util.ArrayList;
 public class Cluster {
     private double cost;
     private final int size;
+    private int counter;
     private double[] centroid;
     private double[] cummul; //sum of coordinates
     private ArrayList<Point> points;
 
     Cluster(double[] centroid, int size){
+        counter = 0;
         points = new ArrayList<>();
         this.centroid = new double[centroid.length];
         this.cummul = new double[centroid.length];
@@ -23,7 +25,7 @@ public class Cluster {
         cost = 0;
     }
 
-    Cluster(double[] centroid){
+    /*Cluster(double[] centroid){
         points = new ArrayList<>();
         this.centroid = new double[centroid.length];
         this.cummul = new double[centroid.length];
@@ -31,7 +33,7 @@ public class Cluster {
         System.arraycopy(centroid, 0, this.cummul, 0, centroid.length);
         this.size = 0;
         cost = 0;
-    }
+    }*/
 
     public void setCentroid(double[] centr){
         System.arraycopy(centr, 0, this.centroid, 0, centr.length);
@@ -66,14 +68,24 @@ public class Cluster {
  * @param point Point that will be assigned to cluster
  */
     public void addPoint(Point point){
-        if(this.size<=points.size())
-           addToFull(point);
-        else{
+        //if(this.size<=points.size())
+        //   addToFull(point);
+        //else{
+        if(size>counter){    
             points.add(point);
+            counter++;
             cost += point.distance;
             point.assigned = true;
             for(int i=0;i<cummul.length;i++)
                 this.cummul[i]+=point.coordinates[i];
+        }
+        else{
+            points.add(point);
+            cost+=point.distance;
+            point.assigned = true;
+            for(int i=0;i<cummul.length;i++)
+                this.cummul[i]+=point.coordinates[i]-this.cummul[i]/size;
+            counter--;
         }
 
     }

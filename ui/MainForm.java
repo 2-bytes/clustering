@@ -43,8 +43,8 @@ public class MainForm extends JFrame {
                 for(Point p :clusters[i].getPoints()){
                     int x = (int)(p.coordinates[0]*(this.getWidth()-1));
                     int y = (int)(p.coordinates[1]*(this.getHeight()-1));
-                    g.drawChars(p.tag.toCharArray(), 0, p.tag.length(), x, this.getHeight()-y);
-                            //g.fillOval(x-4, this.getHeight()-y-4, 8, 8);
+                    //g.drawChars(p.tag.toCharArray(), 0, p.tag.length(), x, this.getHeight()-y);
+                    g.fillOval(x-3, this.getHeight()-y-3, 6, 6);
                 }
             }
         }
@@ -84,7 +84,6 @@ public class MainForm extends JFrame {
 
         });
         this.add(canvas);
-        //canvas.setSize(300, 300);
     }
 
 }

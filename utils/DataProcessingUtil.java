@@ -66,6 +66,7 @@ public class DataProcessingUtil {
      * Selects random columns from given array
      * @param data points
      * @param k number of variables to select
+     * @param omitFirstColumn in case you want to ignore column with indexes for instance.
      * @return Array, with same number of rows as data and k columns selected from data
      */
     public static double[][] selectRandomVariables(double[][] data, int k, boolean omitFirstColumn){
@@ -83,6 +84,15 @@ public class DataProcessingUtil {
             for(int j=0;j<data.length;j++)
                 newdata[j][i] = data[j][column];
         }
+        return newdata;
+    }
+    public static double[][] selectSpecificVariables(double[][] data, int[] colIndexes){
+        if (colIndexes==null)
+            return null;
+        double[][] newdata = new double[data.length][colIndexes.length];
+        for(int i=0;i<colIndexes.length;i++)
+            for(int j=0;j<data.length;j++)
+                newdata[j][i]=data[j][colIndexes[i]];
         return newdata;
     }
 

@@ -26,11 +26,11 @@ public class CClustering {
 
     public static void main(String[] args) {
         try {
-            double[][] data = ExcelDataLoader.loadXLSXFile("H:\\Book2.xlsx", 0, 500, true);
+            double[][] data = ExcelDataLoader.loadXLSXFile("H:\\Book2.xlsx", 0, 200, true);
             DataProcessingUtil.printData(data, 4);
             Cluster[] clusterized= kMeans(
                     DataProcessingUtil.normalize(
-                    DataProcessingUtil.selectRandomVariables(data, 2, true)), 6, new int[]{110, 110, 100, 100, 100, 100});
+                    DataProcessingUtil.selectSpecificVariables(data, new int[]{2, 3})), 5, 10);
             MainForm form = new MainForm(clusterized);
             form.setVisible(true);
         } catch (IOException | InvalidFormatException ex) {
@@ -38,14 +38,12 @@ public class CClustering {
         }
     }
 
-    public static Cluster[] kMeans(double[][] data, int k, int[] inert){
-       numClusters=k;
-        if(inert.length<k)
-           throw new IllegalArgumentException("Inert has less than k elements");
+    public static Cluster[] kMeans(double[][] data, int k, int inert){
+        numClusters=k;
         clusters = new Cluster[k];
         double[][] centroids = initCentroids(data, k);
         for(int i=0;i<k;i++)
-            clusters[i] = new Cluster(centroids[i], inert[i]);
+            clusters[i] = new Cluster(centroids[i], inert);
         points = new ArrayList<>();
         int i=1;
         for(double[] p: data){
