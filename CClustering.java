@@ -1,6 +1,5 @@
 package cclusteringmodified;
 
-import cclusteringmodified.ui.MainForm;
 import cclusteringmodified.utils.ExcelDataLoader;
 import cclusteringmodified.utils.DataProcessingUtil;
 import java.io.IOException;
@@ -11,7 +10,9 @@ import java.util.function.IntConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
-
+import flanagan.analysis.PCA;
+import cclusteringmodified.ui.MainForm;
+import java.util.Arrays;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 /**
  *
@@ -19,18 +20,28 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
  */
 public class CClustering {
 
-    private static final int MAX_ITERATIONS = 10000;
+    //private static final int MAX_ITERATIONS = 10000;
     private static ArrayList<Point> points;
     private static Cluster[] clusters;
     private static int numClusters;
 
     public static void main(String[] args) {
         try {
-            double[][] data = ExcelDataLoader.loadXLSXFile("H:\\Book2.xlsx", 0, 200, true);
-            DataProcessingUtil.printData(data, 4);
+            double[][] data = DataProcessingUtil.normalize(
+                    DataProcessingUtil.selectSpecificVariables(
+                            ExcelDataLoader.loadXLSXFile("I:\\seeds_dataset.xlsx", 0, 140, false), new int[]{0, 1, 2, 3, 4, 5, 6}));
+            DataProcessingUtil.printData(data, 3);
+            PCA pca = new PCA();
+            pca.enterScoresAsRowPerItem(data);
+            double[] eigenvalues = pca.orderedEigenValues();
+            System.out.println(Arrays.toString(eigenvalues));
+            //int numClusters =0;
+            for(int i=0;i<eigenvalues.length;i++)
+            {
+                numClusters+=(eigenvalues[i]>1)?1:0;
+            }
             Cluster[] clusterized= kMeans(
-                    DataProcessingUtil.normalize(
-                    DataProcessingUtil.selectSpecificVariables(data, new int[]{2, 3})), 5, 10);
+                    data, 20, 1);
             MainForm form = new MainForm(clusterized);
             form.setVisible(true);
         } catch (IOException | InvalidFormatException ex) {
@@ -38,24 +49,25 @@ public class CClustering {
         }
     }
 
-    public static Cluster[] kMeans(double[][] data, int k, int inert){
-        numClusters=k;
-        clusters = new Cluster[k];
-        double[][] centroids = initCentroids(data, k);
-        for(int i=0;i<k;i++)
-            clusters[i] = new Cluster(centroids[i], inert);
+    public static Cluster[] kMeans(double[][] data, int inert, int forgotten){
+        //numClusters=k;
+        clusters = new Cluster[numClusters];
+        double[][] centroids = initCentroids(data);
+        for(int i=0;i<numClusters;i++)
+            clusters[i] = new Cluster(centroids[i], inert, forgotten);
         points = new ArrayList<>();
-        int i=1;
-        for(double[] p: data){
-            points.add(new Point(p, String.valueOf(i)));
-            i++;
-        }
+        for(int i=0;i<data.length;i++)
+            points.add(new Point(data[i], String.valueOf(i+1)));
         while(!areAssigned(points))
             assignPoints(clusters, points);
-        double[][] newCentroids = calculateCentroids(clusters);
-        for(int j=0;j<numClusters;j++)
-            clusters[j].setCentroid(newCentroids[j]);
+        //double[][] newCentroids = calculateCentroids(clusters);
+        //for(int j=0;j<numClusters;j++)
+        //    clusters[j].setCentroid(newCentroids[j]);
         return clusters;
+    }
+
+    private static void mergeClusters(){
+        //TODO
     }
 
     public static Cluster[] singleIteration(){
@@ -63,12 +75,22 @@ public class CClustering {
             clusters[i].clear();
         while(!areAssigned(points))
             assignPoints(clusters, points);
-        double[][] newCentroids = calculateCentroids(clusters);
-        for(int j=0;j<numClusters;j++)
-            clusters[j].setCentroid(newCentroids[j]);
+        //double[][] newCentroids = calculateCentroids(clusters);
+        //for(int j=0;j<numClusters;j++)
+        //    clusters[j].setCentroid(newCentroids[j]);
+
+       //DEBUG INFO OUTPUT
+        for (Cluster cluster : clusters) {
+            System.out.println(Arrays.toString(cluster.getCentroid())+" "+cluster.getPoints().size()+
+                    " "+cluster.getTrace());
+        }
+        System.out.println();
+
         return clusters;
     }
-
+    private static void mergeNearest(){
+        
+    }
     /**
      * Function which ensures that all points are assigned to clusters
      * @param points
@@ -78,26 +100,19 @@ public class CClustering {
         return !points.stream().anyMatch((p) -> (!p.assigned));
     }
 
-    private static boolean hasChanged(double[] previous, double[] current){
-        for(int i=0;i<previous.length;i++)
-                if(previous[i]!=current[i])
-                    return false;
-        return true;
-    }
-
     /**
      * Initialize centroids for k-means clustering.
      * @param data points.
      * @param k number of clusters.
      * @return Centers of clusters.
      */
-    private static double[][] initCentroids(double[][] data, int k){
+    private static double[][] initCentroids(double[][] data){
         Random r = new Random();
         //Initialize a stream of k distinct random values and iterate through them creating an array of clusters
-        IntStream ints =  r.ints(0, data.length).distinct().limit(k);
+        IntStream ints =  r.ints(0, data.length).distinct().limit(numClusters);
         PrimitiveIterator<Integer, IntConsumer> iterator = ints.iterator();
-        double[][] result = new double[k][data[0].length];
-        for(int i=0;i<k;i++){
+        double[][] result = new double[numClusters][data[0].length];
+        for(int i=0;i<numClusters;i++){
             int row = iterator.next();
             result[i] = data[row];
         }
@@ -143,7 +158,6 @@ public class CClustering {
                     if(!point.assigned){
                         point.distance = a;
                         clusters[distances.indexOf(a)].addPoint(point);
-                        //clusters[distances.indexOf(a)].shiftCentroid(point.coordinates);
                     }
                 });
     }

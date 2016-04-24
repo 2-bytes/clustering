@@ -4,6 +4,7 @@ import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
+import flanagan.analysis.Stat;
 
 /**
  *
@@ -28,6 +29,21 @@ public class DataProcessingUtil {
             for (double[] data1 : data) {
                 data1[i] = (data1[i] - min) / (max-min);
             }
+        }
+        return data;
+    }
+    /**
+     * Transforms all variables so their means eq. 0 and dispersions eq. 1
+     * @param data
+     * @return standardized array of the same size
+     */
+    public static double[][] standartize(double[][] data){
+        double[] column = new double[data[0].length];
+        for(int i=0;i<column.length;i++){
+            for (double[] data1 : data)
+                column[i] = data1[i];
+            for (double[] data1 : data)
+                data1[i] = (data1[i]-Stat.mean(column))/Stat.rms(column);
         }
         return data;
     }

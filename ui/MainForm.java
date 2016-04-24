@@ -6,10 +6,14 @@ package cclusteringmodified.ui;
  */
 import cclusteringmodified.Cluster;
 import cclusteringmodified.Point;
+import cclusteringmodified.utils.ExcelDataLoader;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -22,7 +26,7 @@ public class MainForm extends JFrame {
     private class Canvas extends JPanel{
 
         private final Color[] colorspace = new Color[]{Color.BLUE, Color.GREEN,
-            Color.MAGENTA, Color.YELLOW, Color.RED, Color.CYAN, Color.PINK, Color.BLACK};
+            Color.MAGENTA, Color.YELLOW, Color.RED, Color.CYAN, Color.PINK, Color.BLACK, Color.ORANGE, Color.WHITE};
         private final Cluster[] clusters;
 
         public Canvas(Cluster[] clusters) {
@@ -44,7 +48,7 @@ public class MainForm extends JFrame {
                     int x = (int)(p.coordinates[0]*(this.getWidth()-1));
                     int y = (int)(p.coordinates[1]*(this.getHeight()-1));
                     //g.drawChars(p.tag.toCharArray(), 0, p.tag.length(), x, this.getHeight()-y);
-                    g.fillOval(x-3, this.getHeight()-y-3, 6, 6);
+                    g.fillOval(x-1, this.getHeight()-y-1, 2, 2);
                 }
             }
         }
@@ -65,8 +69,20 @@ public class MainForm extends JFrame {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                cclusteringmodified.CClustering.singleIteration();
-                canvas.repaint();
+                switch(e.getButton()){
+                    case MouseEvent.BUTTON1:
+                        cclusteringmodified.CClustering.singleIteration();
+                        canvas.repaint();
+                        break;
+                    case MouseEvent.BUTTON2:
+                        try {
+                            ExcelDataLoader.savetoXLSX(clusters);
+                        } catch (IOException ex){
+                            Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        break;
+
+                }
             }
 
             @Override

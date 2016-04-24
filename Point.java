@@ -5,7 +5,7 @@ package cclusteringmodified;
  * @author Vitalii Umanets
  */
 public class Point {
-    public double[] coordinates;
+    public final double[] coordinates;
     public double distance;
     public boolean assigned;
     public final String tag;
